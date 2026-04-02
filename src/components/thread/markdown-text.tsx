@@ -118,13 +118,51 @@ const defaultComponents: any = {
       {...props}
     />
   ),
-  a: ({ className, ...props }: { className?: string }) => (
+  a: ({
+    className,
+    href,
+    ...props
+  }: {
+    className?: string;
+    href?: string;
+    onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+  }) => (
     <a
+      {...props}
       className={cn(
         "text-primary font-medium underline underline-offset-4",
         className,
       )}
-      {...props}
+      href={href}
+      onClick={(event) => {
+        if (!href?.startsWith("data:text/csv")) {
+          props.onClick?.(event);
+          return;
+        }
+
+        event.preventDefault();
+
+        const matches = href.match(/^data:text\/csv;base64,(.*)$/);
+        if (!matches) return;
+
+        const binary = window.atob(matches[1]);
+        const bytes = new Uint8Array(binary.length);
+        for (let index = 0; index < binary.length; index += 1) {
+          bytes[index] = binary.charCodeAt(index);
+        }
+
+        const blob = new Blob([bytes], {
+          type: "text/csv;charset=utf-8",
+        });
+        const objectUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = objectUrl;
+        link.download = "result.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(objectUrl);
+      }}
     />
   ),
   blockquote: ({ className, ...props }: { className?: string }) => (
@@ -243,6 +281,25 @@ const defaultComponents: any = {
   },
 };
 
+const transformMarkdownUrl = (url: string) => {
+  if (url.startsWith("data:text/csv")) {
+    return url;
+  }
+
+  if (
+    url.startsWith("http://") ||
+    url.startsWith("https://") ||
+    url.startsWith("mailto:") ||
+    url.startsWith("tel:") ||
+    url.startsWith("/") ||
+    url.startsWith("#")
+  ) {
+    return url;
+  }
+
+  return "";
+};
+
 const MarkdownTextImpl: FC<{ children: string }> = ({ children }) => {
   return (
     <div className="markdown-content">
@@ -250,6 +307,7 @@ const MarkdownTextImpl: FC<{ children: string }> = ({ children }) => {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={defaultComponents}
+        urlTransform={transformMarkdownUrl}
       >
         {children}
       </ReactMarkdown>
