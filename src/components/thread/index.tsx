@@ -12,7 +12,6 @@ import {
   DO_NOT_RENDER_ID_PREFIX,
   ensureToolCallsHaveResponses,
 } from "@/lib/ensure-tool-responses";
-import { LangGraphLogoSVG } from "../icons/langgraph";
 import { TooltipIconButton } from "./tooltip-icon-button";
 import {
   ArrowDown,
@@ -30,7 +29,6 @@ import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
-import { GitHubSVG } from "../icons/github";
 import {
   Tooltip,
   TooltipContent,
@@ -39,6 +37,7 @@ import {
 } from "../ui/tooltip";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { ContentBlocksPreview } from "./ContentBlocksPreview";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   useArtifactOpen,
   ArtifactContent,
@@ -87,25 +86,70 @@ function ScrollToBottom(props: { className?: string }) {
   );
 }
 
-function OpenGitHubRepo() {
+function MockUserEntry({
+  isLoggedIn,
+  setIsLoggedIn,
+}: {
+  isLoggedIn: boolean;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
-          <a
-            href="https://github.com/langchain-ai/agent-chat-ui"
-            target="_blank"
-            className="flex items-center justify-center"
-          >
-            <GitHubSVG
-              width="24"
-              height="24"
-            />
-          </a>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Open GitHub repo</p>
-        </TooltipContent>
+        <div className="relative">
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="flex items-center justify-center"
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <Avatar className="size-11 border border-black/10">
+                <AvatarFallback
+                  className={cn(
+                    "text-sm font-semibold",
+                    isLoggedIn ? "bg-red-600 text-white" : "bg-gray-300 text-gray-700",
+                  )}
+                >
+                  {isLoggedIn ? "张" : ""}
+                </AvatarFallback>
+              </Avatar>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>{isLoggedIn ? "张三的团队" : "未登录"}</p>
+          </TooltipContent>
+          {menuOpen && (
+            <div className="absolute right-0 z-20 mt-2 min-w-32 rounded-xl border bg-white p-1 shadow-lg">
+              {!isLoggedIn ? (
+                <button
+                  type="button"
+                  className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100"
+                  onClick={() => {
+                    setIsLoggedIn(true);
+                    setMenuOpen(false);
+                  }}
+                >
+                  登录
+                </button>
+              ) : (
+                <>
+                  <div className="px-3 py-2 text-sm text-gray-500">张三的团队</div>
+                  <button
+                    type="button"
+                    className="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-gray-100"
+                    onClick={() => {
+                      setIsLoggedIn(false);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    退出登录
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </Tooltip>
     </TooltipProvider>
   );
@@ -114,6 +158,7 @@ function OpenGitHubRepo() {
 export function Thread() {
   const [artifactContext, setArtifactContext] = useArtifactContext();
   const [artifactOpen, closeArtifact] = useArtifactOpen();
+  const [isMockLoggedIn, setIsMockLoggedIn] = useState(false);
 
   const [threadId, _setThreadId] = useQueryState("threadId");
   const [chatHistoryOpen, setChatHistoryOpen] = useQueryState(
@@ -326,13 +371,16 @@ export function Thread() {
                 )}
               </div>
               <div className="absolute top-2 right-4 flex items-center">
-                <OpenGitHubRepo />
+                <MockUserEntry
+                  isLoggedIn={isMockLoggedIn}
+                  setIsLoggedIn={setIsMockLoggedIn}
+                />
               </div>
             </div>
           )}
           {chatStarted && (
-            <div className="relative z-10 flex items-center justify-between gap-3 p-2">
-              <div className="relative flex items-center justify-start gap-2">
+            <div className="relative z-10 flex items-center justify-between gap-3 border-b border-slate-100 px-6 py-3">
+              <div className="relative flex min-w-0 items-center justify-start gap-2">
                 <div className="absolute left-0 z-10">
                   {(!chatHistoryOpen || !isLargeScreen) && (
                     <Button
@@ -352,7 +400,7 @@ export function Thread() {
                   className="flex cursor-pointer items-center gap-2"
                   onClick={() => setThreadId(null)}
                   animate={{
-                    marginLeft: !chatHistoryOpen ? 48 : 0,
+                    marginLeft: !chatHistoryOpen ? 48 : 24,
                   }}
                   transition={{
                     type: "spring",
@@ -360,19 +408,23 @@ export function Thread() {
                     damping: 30,
                   }}
                 >
-                  <LangGraphLogoSVG
-                    width={32}
-                    height={32}
-                  />
-                  <span className="text-xl font-semibold tracking-tight">
-                    Agent Chat
-                  </span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[11px] font-medium tracking-[0.22em] text-slate-400 uppercase">
+                      Smart Extraction
+                    </span>
+                    <span className="text-lg font-semibold tracking-[0.01em] text-slate-900">
+                      高质量数据集智能抽提助手
+                    </span>
+                  </div>
                 </motion.button>
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center">
-                  <OpenGitHubRepo />
+                  <MockUserEntry
+                    isLoggedIn={isMockLoggedIn}
+                    setIsLoggedIn={setIsMockLoggedIn}
+                  />
                 </div>
                 <TooltipIconButton
                   size="lg"
@@ -385,7 +437,7 @@ export function Thread() {
                 </TooltipIconButton>
               </div>
 
-              <div className="from-background to-background/0 absolute inset-x-0 top-full h-5 bg-gradient-to-b" />
+              <div className="from-background to-background/0 absolute inset-x-0 top-full h-4 bg-gradient-to-b" />
             </div>
           )}
 
@@ -436,9 +488,8 @@ export function Thread() {
                 <div className="sticky bottom-0 flex flex-col items-center gap-8 bg-white">
                   {!chatStarted && (
                     <div className="flex items-center gap-3">
-                      <LangGraphLogoSVG className="h-8 flex-shrink-0" />
                       <h1 className="text-2xl font-semibold tracking-tight">
-                        Agent Chat
+                        高质量数据集智能抽提助手
                       </h1>
                     </div>
                   )}
@@ -484,38 +535,8 @@ export function Thread() {
                       />
 
                       <div className="flex items-center gap-6 p-2 pt-4">
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              id="render-tool-calls"
-                              checked={hideToolCalls ?? false}
-                              onCheckedChange={setHideToolCalls}
-                            />
-                            <Label
-                              htmlFor="render-tool-calls"
-                              className="text-sm text-gray-600"
-                            >
-                              Hide Tool Calls
-                            </Label>
-                          </div>
-                        </div>
-                        <Label
-                          htmlFor="file-input"
-                          className="flex cursor-pointer items-center gap-2"
-                        >
-                          <Plus className="size-5 text-gray-600" />
-                          <span className="text-sm text-gray-600">
-                            Upload PDF or Image
-                          </span>
-                        </Label>
-                        <input
-                          id="file-input"
-                          type="file"
-                          onChange={handleFileUpload}
-                          multiple
-                          accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
-                          className="hidden"
-                        />
+                        {/* Phase 1: hide tool-call toggle and file upload entry in the UI.
+                            Keep the underlying state and handlers for later reuse. */}
                         {stream.isLoading ? (
                           <Button
                             key="stop"
