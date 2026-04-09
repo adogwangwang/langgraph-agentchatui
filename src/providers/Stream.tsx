@@ -26,7 +26,61 @@ import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";
 
-export type StateType = { messages: Message[]; ui?: UIMessage[] };
+export interface TableResult {
+  result_id: string;
+  message_id: string;
+  type: "table";
+  title: string;
+  preview: {
+    columns: string[];
+    rows: string[][];
+  };
+  meta: {
+    total_rows: number;
+    preview_rows: number;
+    columns_count: number;
+  };
+  download: {
+    formats: string[];
+    filename: string;
+    data_url: string;
+  };
+  raw: {
+    columns: string[];
+    rows: string[][];
+  };
+}
+
+export interface JsonResult {
+  result_id: string;
+  message_id: string;
+  type: "json";
+  title: string;
+  preview: {
+    json: Record<string, unknown>;
+  };
+  meta: {
+    top_level_type: string;
+    field_count: number;
+    preview_count: number;
+  };
+  download: {
+    formats: string[];
+    filename: string;
+    data_url: string;
+  };
+  raw: {
+    json: Record<string, unknown>;
+  };
+}
+
+export type StructuredResult = TableResult | JsonResult;
+
+export type StateType = {
+  messages: Message[];
+  ui?: UIMessage[];
+  results?: StructuredResult[];
+};
 
 const useTypedStream = useStream<
   StateType,
@@ -35,6 +89,7 @@ const useTypedStream = useStream<
       messages?: Message[] | Message | string;
       ui?: (UIMessage | RemoveUIMessage)[] | UIMessage | RemoveUIMessage;
       context?: Record<string, unknown>;
+      results?: StructuredResult[];
     };
     CustomEventType: UIMessage | RemoveUIMessage;
   }

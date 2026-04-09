@@ -19,16 +19,12 @@ import {
   PanelRightOpen,
   PanelRightClose,
   SquarePen,
-  XIcon,
-  Plus,
 } from "lucide-react";
 import { useQueryState, parseAsBoolean } from "nuqs";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
 import ThreadHistory from "./history";
 import { toast } from "sonner";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
 import {
   Tooltip,
   TooltipContent,
@@ -41,7 +37,6 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import {
   useArtifactOpen,
   ArtifactContent,
-  ArtifactTitle,
   useArtifactContext,
 } from "./artifact";
 
@@ -165,15 +160,10 @@ export function Thread() {
     "chatHistoryOpen",
     parseAsBoolean.withDefault(false),
   );
-  const [hideToolCalls, setHideToolCalls] = useQueryState(
-    "hideToolCalls",
-    parseAsBoolean.withDefault(false),
-  );
   const [input, setInput] = useState("");
   const {
     contentBlocks,
     setContentBlocks,
-    handleFileUpload,
     dropRef,
     removeBlock,
     resetBlocks: _resetBlocks,
@@ -566,20 +556,13 @@ export function Thread() {
             />
           </StickToBottom>
         </motion.div>
-        <div className="relative flex flex-col border-l">
-          <div className="absolute inset-0 flex min-w-[30vw] flex-col">
-            <div className="grid grid-cols-[1fr_auto] border-b p-4">
-              <ArtifactTitle className="truncate overflow-hidden" />
-              <button
-                onClick={closeArtifact}
-                className="cursor-pointer"
-              >
-                <XIcon className="size-5" />
-              </button>
+        {artifactOpen && (
+          <div className="relative flex flex-col border-l border-slate-200 bg-white">
+            <div className="absolute inset-0 flex min-w-[30vw] flex-col">
+              <ArtifactContent className="relative flex-grow" />
             </div>
-            <ArtifactContent className="relative flex-grow" />
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
